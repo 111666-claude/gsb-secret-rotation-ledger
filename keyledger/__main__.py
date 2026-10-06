@@ -1,6 +1,7 @@
 """命令行入口。"""
 
 import argparse
+import json
 
 from . import core, samples
 
@@ -40,7 +41,8 @@ def main(argv=None):
         return 0
     if args.cmd == "active":
         state = core.load(args.state)
-        print(core.active_at(state, args.at, core.Counter()))
+        active = core.active_at(state, args.at, core.Counter())
+        print(json.dumps({"active": active}, ensure_ascii=False))
         return 0
     if args.cmd == "demo":
         return samples.run(args.name)
