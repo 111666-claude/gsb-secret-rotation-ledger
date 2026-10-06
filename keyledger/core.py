@@ -31,14 +31,19 @@ def load(path):
 
 def rotate(state, at, rid, counter):
     """登记一次轮换，返回新版本号。"""
+    rotations = state["rotations"]
+    if rid in rotations:
+        return rotations[rid]
     versions = state["versions"]
-    for _v in versions:
-        counter.scanned += 1
-    new_id = versions[-1]["id"] + 1
+    counter.scanned += 1
     prev = versions[-1]
-    prev["retired"] = at
+    prev["retired"] = at + state["window"]
+    if len(versions) >= 2:
+        counter.scanned += 1
+        versions[-2]["retired"] = prev["created"]
+    new_id = prev["id"] + 1
     versions.append({"id": new_id, "created": at, "retired": None})
-    state["rotations"][rid] = new_id
+    rotations[rid] = new_id
     return new_id
 
 
@@ -47,6 +52,9 @@ def active_at(state, at, counter):
     out = []
     for v in state["versions"]:
         counter.scanned += 1
-        if v["retired"] is None:
-            out.append(v["id"])
+        if v["created"] > at:
+            continue
+        if v["retired"] is not None and v["retired"] <= at:
+            continue
+        out.append(v["id"])
     return out
